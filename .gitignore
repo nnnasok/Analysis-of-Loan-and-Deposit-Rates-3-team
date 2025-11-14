@@ -1,0 +1,24 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+banks_venv/
+venv/
+
+# IDE/editor
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Logs and temp
+*.log
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+blabk_blank.py
+get_regions_banki_ru.py
+parser_banki_ru.py
