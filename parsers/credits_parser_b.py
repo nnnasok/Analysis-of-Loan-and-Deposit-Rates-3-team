@@ -1,10 +1,20 @@
 
 import time
 import requests
-import pandas as pd
-from config import COOKIES, HEADERS
+from config import HEADERS
 from etl.load import save_to_csv
+import os
+import json
+from dotenv import load_dotenv
 
+load_dotenv()
+
+cookies_str = os.getenv("COOKIES")
+if cookies_str:
+    COOKIES = json.loads(cookies_str)
+else:
+    print("[WARN] COOKIES not found in .env, using empty cookies")
+    COOKIES = {}
 
 def fetch_credit_page(page=1, region_id=211, limit=25):
     url = "https://www.banki.ru/bff/catalog/api/v1/widget/group"
@@ -73,9 +83,7 @@ def parse_credits(region_id=211):
             break
 
         details = fetch_credit_details(uids)
-        # if not details:
-        #     print(f"[WARN] Не удалось получить детали для {len(uids)} uid")
-        #     continue
+        
         for prod in details:
             flat = {
                 **{k: prod.get(k) for k in ["productId", "productUid", "productType", "productName", "name", "url", "smallImage", "updatedAt"]},

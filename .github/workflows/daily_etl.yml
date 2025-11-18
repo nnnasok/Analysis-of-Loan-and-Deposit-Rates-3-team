@@ -1,0 +1,38 @@
+name: Daily ETL to Neon
+
+# время запуска
+on:
+  schedule:
+    # 10:00 UTC ~ 13 по мск
+    - cron: '10 10 * * *'
+  workflow_dispatch:  # для ручной отладки
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+
+    env:
+      # берем секрет из GitHub
+      COOKIES: ${{ secrets.COOKIES_ }}
+      DATABASE_URL: ${{ secrets.NEON_DB_URL }}
+
+    steps:
+      # проверяем репозиторий
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      # python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # устанавливаем зависимости
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # запускаем мэин
+      - name: Run ETL
+        run: python main.py

@@ -1,5 +1,3 @@
-# empty
-
 from parsers.credits_parser_b import parse_credits
 from parsers.deposits_parser_b import parse_deposits
 from parsers.regions_parser_b import fetch_regions
@@ -9,22 +7,10 @@ import random
 def collect_new_data(take_credits=True, take_deposits=True, SESSION=None):
     # fetch_regions -> pd.DataFrame 
     regions = fetch_regions()
-    flag = False
+    
     if len(regions) > 0:
         try:
             for id, city in zip(regions['id'], regions['region_url']):
-                # id = 211
-                # city = 'sankt-peterburg'
-                # парсим кредиты и депозиты (функции сохраняют данные, ничего не возращают)
-                if city != 'chelyabinskaya_oblast~/magnitogorsk' and not flag:
-                    print(city)
-                else:
-                    flag = True
-
-                if not flag:
-                    continue
-                    
-
                 if take_credits:
                     try:
                         parse_credits(region_id=id)

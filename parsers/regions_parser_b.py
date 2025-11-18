@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-import os
+
 from etl.load import save_to_csv
 
 def fetch_regions(limit=100, dir='regions'):

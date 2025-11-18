@@ -1,10 +1,3 @@
-COOKIES = {
-    "b": "sU8CAIAh4jwF91X3QwAAgAAA",
-    "p": "NdoCAHdmqlMA",
-    "PVID": "0wD5wy1yZzoa002D0D0N442a:::0-0-0-ad7a222-0-e2dc8e3",
-    "VID": "0wD5wy1yZzoa002D0D0N442a:::0-0-0-ad7a222-0-e2dc8e3",
-}
-
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -73,7 +66,49 @@ columns_credits = {
     'meta_initialFeeMin': 'initialFeeMin',
     'meta_initialFeeMax': 'initialFeeMax'
 }
-
+CREDITS_MAP = {
+    'productId': 'offer_id',
+    'productUid': 'offer_uid',
+    'productType': 'offer_type',
+    'productName': 'offer_pledge',
+    'name': 'offer_pledge_alt',
+    'url': 'offer_url',
+    'smallImage': 'img_logo_url',
+    'updatedAt': 'update_time',
+    'partner_id': 'bank_id',
+    'partner_uid': 'bank_uid',
+    'partner_type': 'bank_type',
+    'partner_name': 'bank_name',
+    'partner_image': 'img_logo_url_alt',
+    'partner_license': 'idx_license',
+    'partner_url': 'bank_url',
+    'partner_phone': 'bank_phone',
+    'partner_address': 'bank_address',
+    'partner_code': 'bank_code',
+    'meta_currency': 'currency',
+    'meta_detailLink': 'url_with_details',
+    'meta_rateMin': 'rateMin',
+    'meta_rateMax': 'rateMax',
+    'meta_rateRange': 'rateRange',
+    'meta_fullCreditRateMin': 'fullCreditRateMin',
+    'meta_fullCreditRateMax': 'fullCreditRateMax',
+    'meta_amountMin': 'amountMin',
+    'meta_amountMax': 'amountMax',
+    'meta_amountRange': 'amountRange',
+    'meta_termMin': 'termMin',
+    'meta_termMax': 'termMax',
+    'meta_periodFromNotation': 'periodFromNotation',
+    'meta_periodToNotation': 'periodToNotation',
+    'meta_termUnit': 'termUnit',
+    'meta_issuanceCostMin': 'issuanceCostMin',
+    'meta_issuanceCostMax': 'issuanceCostMax',
+    'meta_annualServiceMin': 'annualServiceMin',
+    'meta_annualServiceMax': 'annualServiceMax',
+    'meta_cashWithdrawalsAtAtms': 'cashWithdrawalsAtAtms',
+    'meta_cashWithdrawalsAtOtherBankAtms': 'cashWithdrawalsAtOtherBankAtms',
+    'meta_initialFeeMin': 'initialFeeMin',
+    'meta_initialFeeMax': 'initialFeeMax'
+}
 columns_deposits = {
     'bank_id': 'bank_id',
     'bank_name': 'bank_name',
@@ -108,4 +143,65 @@ columns_deposits = {
     'rates_max': 'ratesMax'
     }
 
-print(list(columns_credits.keys()))
+
+DEPOSITS_MAP = {
+    'bank_id': 'bank_id',
+    'bank_name': 'bank_name',
+    'bank_logo': 'img_logo_url',
+    'bank_licence': 'idx_license',
+    'product_name': 'offer_pledge',
+    'product_url': 'offer_url',
+    'rate_min': 'rateMin',
+    'rate_max': 'rateMax',
+    'amount_from': 'amountMin',
+    'amount_to': 'amountMax',
+    'period_from': 'termMin',
+    'period_to': 'termMax',
+    'currency': 'currency',
+    'efficient_rate': 'rateEfficient',
+    'is_special_offer': 'is_special_offer',
+    'is_online_opening_possible': 'is_online_opening_possible',
+    'is_partial_withdrawal_possible': 'is_partial_withdrawal_possible',
+    'is_replenishment_possible': 'is_replenishment_possible',
+    'action_title': 'action_title',
+    'action_percent': 'action_percent',
+    'action_link': 'action_link',
+    'capitalization': 'capitalization',
+    'early_termination_method': 'early_termination_method',
+    'rates_min': 'ratesMin',
+    'rates_max': 'ratesMax'
+}
+DROP_ALWAYS = [
+    "name", 
+    "partner_type",
+    "partner_image",
+    "meta_fullCreditRateMin",
+    "meta_fullCreditRateMax",
+    "meta_issuanceCostMin",
+    "meta_issuanceCostMax",
+    "meta_annualServiceMin",
+    "meta_annualServiceMax",
+    "meta_cashWithdrawalsAtAtms",
+    "meta_cashWithdrawalsAtOtherBankAtms",
+    "meta_initialFeeMin",
+    "meta_initialFeeMax",
+]
+
+REGIONS_MAP = {
+    "id": "region_id",
+    "name": "region_name",
+    "area_name": "area_name",
+    "is_city": "is_city",
+    "parent_id": "parent_id",
+    "kladr_code": "kladr_code",
+    "region_url": "region_url",
+    "is_regional_center": "is_regional_center",
+}
+# DB_HOST= "localhost"
+# DB_PORT= 5432
+# DB_NAME= "finance_db"
+# DB_USER= "student"
+# DB_PASSWORD= "veryhardpassword"
+
+
+

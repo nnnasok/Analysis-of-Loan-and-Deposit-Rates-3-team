@@ -1,13 +1,8 @@
-# import os
-# import pandas as pd
 import requests
-# import time
-from config import COOKIES, HEADERS
-
-from parsers.credits_parser_b import parse_credits
-from parsers.deposits_parser_b import parse_deposits
-from parsers.regions_parser_b import fetch_regions
+from config import HEADERS
+from etl.transform_all import transform_all
 from etl.extract import collect_new_data
+from etl.db_writer import DBWriter
 
 if __name__ == "__main__":
     print("Start")
@@ -21,4 +16,7 @@ if __name__ == "__main__":
     collect_new_data(take_credits=True, take_deposits=True, SESSION=SESSION)
 
     print("=== END collecting data ===")
-    # transform_all()
+    transform_all()
+    print("=== END transforming data ===")
+    DBWriter().run_all()
+    print("=== END adding data in DB ===")

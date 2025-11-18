@@ -2,7 +2,7 @@ import time
 import requests
 import pandas as pd
 from etl.load import save_to_csv
-from config import COOKIES, HEADERS
+from config import HEADERS
 
 # вклады
 def fetch_deposits_page(SESSION, page=1, city="sankt-peterburg", per_page=10):

@@ -13,15 +13,15 @@ def compute_hash(row, fields):
 def add_hash_and_flags(df: pd.DataFrame, hash_fields=None, product_type: str="credit") -> pd.DataFrame:
     """
     добавляет product_hash, is_actual, start_time, end_time.
-    хэш используется, чтобы понимать — это то же самое предложение или новое на основе одной колонки
+    хэш используется, чтобы понимать: это то же самое предложение или новое на основе одной колонки
     """
     if hash_fields is None:
-        if product_type == "credit":
+        if product_type == "credits":
             # для кредитов можно: ставка + сумма + банк + срок
             # нужно нормализовать поля для кредитов и вкладов (upd: не нужно)
             hash_fields = ['offer_id', 'offer_type', 'offer_pledge', 'bank_id', 'bank_uid', 'rateMin', 'rateMax', 'amountMin', 'amountMax', 'termMin', 'termMax', 'periodToNotation']
 
-        elif product_type == "deposit":
+        elif product_type == "deposits":
             # поменять
             hash_fields = [
                 "bank_name",
