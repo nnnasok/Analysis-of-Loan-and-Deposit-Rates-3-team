@@ -39,8 +39,7 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "github-actions"
-          git add storage/history/*.csv
-          git add storage/raw_data/**/*.csv
-          git add storage/raw_data/regions/*.csv
+          git add storage/history
+          git add storage/data_raw
           git commit -m "Daily data update" || echo "No changes to commit"
           git push origin HEAD
