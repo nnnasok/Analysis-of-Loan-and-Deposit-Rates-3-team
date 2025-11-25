@@ -45,13 +45,13 @@ def add_hash_and_flags(df: pd.DataFrame, hash_fields=None, product_type: str="cr
     df["end_time"] = None
     return df
 
-def merge_with_history(new_df: pd.DataFrame, history_path: str, product_type: str="credit") -> pd.DataFrame:
+def merge_with_history(new_df: pd.DataFrame, history_path: str, product_type: str="credit", hash_fields=None) -> pd.DataFrame:
     """
     Добавляет хэши и флаги к новому набору данных.
     Сравнивает новый набор данных с историческим CSV.
     Помечает неактуальные записи и добавляет новые.
     """
-    new_df = add_hash_and_flags(new_df, product_type=product_type)
+    new_df = add_hash_and_flags(new_df, hash_fields=hash_fields, product_type=product_type)
     try:
         old_df = pd.read_csv(history_path)
         print(f"[INFO] Загружена история: {len(old_df)} записей")
@@ -63,10 +63,22 @@ def merge_with_history(new_df: pd.DataFrame, history_path: str, product_type: st
     merged = pd.concat([old_df, new_df])
     merged.drop_duplicates(subset=["product_hash"], keep="last", inplace=True)
 
-    # все старые, которых нет в новом датафрейме, считаем устаревшими
-    old_hashes = set(old_df["product_hash"])
-    new_hashes = set(new_df["product_hash"])
-    inactive = old_hashes - new_hashes
+    inactive = []
+    # если есть region_id, то деактивация только по регионам, которые обновились
+    if "region_id" in new_df.columns and "region_id" in old_df.columns:
+        regions_today = set(new_df["region_id"])
+        for region in regions_today:
+            old_subset = old_df[old_df["region_id"] == region]
+            new_subset = new_df[new_df["region_id"] == region]
+
+            old_hashes = set(old_subset["product_hash"])
+            new_hashes = set(new_subset["product_hash"])
+            inactive.extend(old_hashes - new_hashes)
+    else:
+        # для таблиц без region_id (например, сами продукты), мы ничего не деактивируем
+        inactive = []
+        new_hashes = set()
+
 
     merged.loc[merged["product_hash"].isin(inactive), "is_actual"] = False
     merged.loc[merged["product_hash"].isin(inactive), "end_time"] = datetime.now(utc_plus_3).strftime("%Y-%m-%d %H:%M:%S")

@@ -47,7 +47,8 @@ def apply_mapping(df: pd.DataFrame, mapping: dict) -> pd.DataFrame:
 
 
 def drop_null_cols(df: pd.DataFrame, always_drop: list = None) -> pd.DataFrame:
-    """Удаляем колонки, которые полностью заполнены NaN / None, плюс те, которые в always_drop (если есть)."""
+    """Удаляем колонки, которые полностью заполнены NaN / None, 
+       плюс те, которые в always_drop (если есть)."""
     if always_drop is None:
         always_drop = []
     # приводим пустые строки к NaN для надёжности
@@ -67,6 +68,7 @@ def split_product_region(df: pd.DataFrame, uid_col="offer_uid"):
     """Разбивает DF на products и product-region таблицы."""
     df = df.copy()
 
+    # защитная заглушка
     if uid_col not in df.columns or df[uid_col].isna().all():
         df[uid_col] = df.apply(
             lambda r: hashlib.sha256(
@@ -89,10 +91,14 @@ def merge_products(products_df: pd.DataFrame, type_name: str) -> pd.DataFrame:
     return merge_with_history(products_df, history_path=path, product_type=type_name)
 
 
+# def merge_product_regions(region_df: pd.DataFrame, type_name: str) -> pd.DataFrame:
+#     path = os.path.join(HISTORY_BASE, f"{type_name}_regions_history.csv")
+#     return merge_with_history(region_df, history_path=path, product_type="regions")
+
 def merge_product_regions(region_df: pd.DataFrame, type_name: str) -> pd.DataFrame:
     path = os.path.join(HISTORY_BASE, f"{type_name}_regions_history.csv")
-    return merge_with_history(region_df, history_path=path, product_type="regions")
-
+    # используем offer_uid + region_id как ключ для связи продукта и региона
+    return merge_with_history(region_df, history_path=path, product_type="regions", hash_fields=["offer_uid", "region_id"])
 
 # Transformers 
 def transform_type(type_name: str, mapping: dict):
