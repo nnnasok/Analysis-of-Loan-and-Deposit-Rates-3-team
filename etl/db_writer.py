@@ -249,13 +249,53 @@ class DBWriter:
         df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
         self._upsert_table(self.credit_regions, df, "id")
 
+        existing_regions = set(
+            row[0] for row in self.connection.execute(
+                self.regions.select().with_only_columns([self.regions.c.id])
+            ).fetchall()
+        )
+        
+        new_region_ids = set(df['region_id'].unique()) - existing_regions
+        if new_region_ids:
+            new_regions_df = pd.DataFrame([
+                {'id': rid, 'name': f'Unknown {rid}'} for rid in new_region_ids
+            ])
+            self._upsert_table(self.regions, new_regions_df, 'id')
+            print(f"[INFO] Добавлено {len(new_region_ids)} новых регионов в таблицу regions")
+
+
+        self._upsert_table(self.credit_regions, df, "id")
+        print(f"[INFO] Загружено {len(df)} записей в таблицу credit_regions")
+
     def load_deposit_regions(self):
         df = self.load_csv("deposits_regions_history.csv")
         if df is None:
             return
+        
         df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
         df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
+
+        # Получаем все существующие region_id из таблицы regions
+        existing_regions = set(
+            row[0] for row in self.connection.execute(
+                self.regions.select().with_only_columns([self.regions.c.id])
+            ).fetchall()
+        )
+
+
+        new_region_ids = set(df['region_id'].unique()) - existing_regions
+
+
+        if new_region_ids:
+            new_regions_df = pd.DataFrame([
+                {'id': rid, 'name': f'Unknown {rid}'} for rid in new_region_ids
+            ])
+            self._upsert_table(self.regions, new_regions_df, 'id')
+            print(f"[INFO] Добавлено {len(new_region_ids)} новых регионов в таблицу regions")
+
+
         self._upsert_table(self.deposit_regions, df, "id")
+        print(f"[INFO] Загружено {len(df)} записей в таблицу deposit_regions")
 
     # orchestrator
     def run_all(self):

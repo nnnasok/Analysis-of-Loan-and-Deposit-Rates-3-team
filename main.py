@@ -1,5 +1,3 @@
-import requests
-from config import HEADERS
 from etl.transform_all import transform_all
 from etl.extract import collect_new_data
 from etl.db_writer import DBWriter
