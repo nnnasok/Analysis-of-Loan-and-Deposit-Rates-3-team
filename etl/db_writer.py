@@ -6,7 +6,7 @@ from sqlalchemy import (create_engine, MetaData, Table, Column, Integer, String,
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import create_async_engine
 from dotenv import load_dotenv
-
+from sqlalchemy import select
 
 
 HISTORY_DIR = "storage/history"
@@ -150,6 +150,16 @@ class DBWriter:
             return None
         return df
 
+    def _get_existing_region_ids(self):
+        """Получить множество всех region_id из таблицы regions."""
+        try:
+            with self.engine.begin() as conn:
+                result = conn.execute(select(self.regions.c.region_id))
+                return {row[0] for row in result}
+        except Exception as e:
+            print(f"Error getting existing regions: {e}")
+            return set()
+
 
     # Load functions
     def _upsert_table(self, table, df: pd.DataFrame, pk: str):
@@ -167,15 +177,17 @@ class DBWriter:
         # drop columns that are completely missing in table
         cols_to_use = [c for c in df.columns if c in table_cols]
         df = df[cols_to_use]
-
+        
         if df.empty:
             print(f"[DB] Nothing to insert for table {table.name} (no matching columns).")
             return
 
         # fill NaN -> None to produce None in inserts
         df = df.where(pd.notnull(df), None)
-
+  
         with self.engine.begin() as conn:
+            missed_rows = 0
+            all_rows = len(df)
             for _, row in df.iterrows():
                 data = row.to_dict()
                 stmt = insert(table).values(**data)
@@ -188,14 +200,23 @@ class DBWriter:
                     stmt = stmt.on_conflict_do_nothing(index_elements=[pk])
                 else:
                     stmt = stmt.on_conflict_do_update(index_elements=[pk], set_=upd)
+                try:
+                    conn.execute(stmt)
+                except:
+                    missed_rows += 1
+            if missed_rows:
+                print(f"Miss {missed_rows} / {all_rows} in file: {table.name}")
 
-                conn.execute(stmt)
+            
 
     def load_credit_products(self):
         df = self.load_csv("credits_products_history.csv")
         df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
         df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
+        # print(df)
+        # print(df.columns)
         self._upsert_table(self.credit_products, df, "offer_uid")
+
 
     def load_deposit_products(self):
         df = self.load_csv("deposits_products_history.csv")
@@ -236,7 +257,7 @@ class DBWriter:
         # sqlalchemy не работает с пандосовскими natами, поэтому нужно врнучную вбивать питон-наны
         df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
         df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
-
+        # print(df["region_id"].unique())
         self._upsert_table(self.regions, df, "region_id")
         print(f"[DB] Regions upsert attempted, rows: {len(df)}")
 
@@ -245,57 +266,50 @@ class DBWriter:
         df = self.load_csv("credits_regions_history.csv")
         if df is None:
             return
-        df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
-        df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
-        self._upsert_table(self.credit_regions, df, "id")
-
-        existing_regions = set(
-            row[0] for row in self.connection.execute(
-                self.regions.select().with_only_columns([self.regions.c.id])
-            ).fetchall()
-        )
         
-        new_region_ids = set(df['region_id'].unique()) - existing_regions
-        if new_region_ids:
-            new_regions_df = pd.DataFrame([
-                {'id': rid, 'name': f'Unknown {rid}'} for rid in new_region_ids
-            ])
-            self._upsert_table(self.regions, new_regions_df, 'id')
-            print(f"[INFO] Добавлено {len(new_region_ids)} новых регионов в таблицу regions")
-
-
-        self._upsert_table(self.credit_regions, df, "id")
-        print(f"[INFO] Загружено {len(df)} записей в таблицу credit_regions")
-
-    def load_deposit_regions(self):
-        df = self.load_csv("deposits_regions_history.csv")
-        if df is None:
+        # получим список существующих регионов из БД
+        existing_regions = self._get_existing_region_ids()
+        
+        # оставим только те, у которых region_id существует (периодически могут появляться новые регионы, приведет к ошибке в бд)
+        df = df[df['region_id'].isin(existing_regions)]
+        
+        # Если после фильтрации данных не осталось - выведем предупреждение
+        if df.empty:
+            print("[WARN]: No valid credit-region relationships found after filtering")
             return
         
         df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
         df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
-
-        # Получаем все существующие region_id из таблицы regions
-        existing_regions = set(
-            row[0] for row in self.connection.execute(
-                self.regions.select().with_only_columns([self.regions.c.id])
-            ).fetchall()
-        )
+        self._upsert_table(self.credit_regions, df, "id")
 
 
-        new_region_ids = set(df['region_id'].unique()) - existing_regions
+    def load_deposit_regions(self):
+        def filtration(df):
+            # dfr = pd.read_csv("storage/history/deposits_products_history.csv")
+            dfp = pd.read_csv("storage/history/deposits_regions_history.csv")
+            print("BEFORE FILTERING:", len(df))
+            products = set(dfp["offer_uid"])
+            regions = set(df["offer_uid"])
 
+            missing = regions - products
 
-        if new_region_ids:
-            new_regions_df = pd.DataFrame([
-                {'id': rid, 'name': f'Unknown {rid}'} for rid in new_region_ids
-            ])
-            self._upsert_table(self.regions, new_regions_df, 'id')
-            print(f"[INFO] Добавлено {len(new_region_ids)} новых регионов в таблицу regions")
+            print("COUNT MISSING:", len(missing))
+            # print("SAMPLE:", list(missing)[:20])
 
-
+            if missing:
+                df = df[~df["offer_uid"].isin(missing)]
+            return df
+        
+        df = self.load_csv("deposits_regions_history.csv")
+        # df = filtration(df)
+        if df is None:
+            return
+        
+        
+        df['end_time'] = df['end_time'].apply(lambda x: None if pd.isna(x) else x)
+        df['start_time'] = df['start_time'].apply(lambda x: None if pd.isna(x) else x)
         self._upsert_table(self.deposit_regions, df, "id")
-        print(f"[INFO] Загружено {len(df)} записей в таблицу deposit_regions")
+
 
     # orchestrator
     def run_all(self):
@@ -304,8 +318,11 @@ class DBWriter:
         self.create_schema()
         self.load_regions()
         self.load_credit_products()
+        print("[DB] Credit products loaded into PostgreSQL")
         self.load_deposit_products()
+        print("[DB] Deposit products loaded into PostgreSQL")
         self.load_credit_regions()
+        print("[DB] Credit regions loaded into PostgreSQL")
         self.load_deposit_regions()
         print("[DB] All data loaded into PostgreSQL")
 

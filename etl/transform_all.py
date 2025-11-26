@@ -3,7 +3,7 @@ import os
 import glob
 import pandas as pd
 from pathlib import Path
-from datetime import timezone, timedelta
+from datetime import datetime, timezone, timedelta
 import hashlib
 
 from etl.transform import add_hash_and_flags, merge_with_history
@@ -142,7 +142,8 @@ def transform_type(type_name: str, mapping: dict):
     }
 
 def for_regions():
-    regions = pd.read_csv(os.path.join(RAW_BASE, "regions", "banki_regions_dump_.csv"))
+    datestamp = datetime.now(utc_plus_3).strftime('%Y-%m-%d')
+    regions = pd.read_csv(os.path.join(RAW_BASE, "regions", f"banki_regions_dump_{datestamp}.csv"))
     regions = apply_mapping(regions, REGIONS_MAP)
     regions_new = add_hash_and_flags(regions, product_type="regions")
     regions_new.to_csv(os.path.join(HISTORY_BASE, "regions.csv"), index=False, encoding="utf-8-sig")
