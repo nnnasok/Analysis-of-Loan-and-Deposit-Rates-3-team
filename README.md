@@ -7,6 +7,7 @@
 - `etl/` — ETL-пайплайн для сбора данных (extract, transform, load)
 - `parsers/` — парсеры для кредитов, вкладов и регионов
 - `storage/` — хранилище сырых данных и истории
+- `time_series/` — анализ и прогнозирование временных рядов (ARIMA/SARIMA)
 - `utils/` — вспомогательные утилиты
 - `.github/workflows/` — GitHub Actions для автоматизации
 
